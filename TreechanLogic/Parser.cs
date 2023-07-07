@@ -13,8 +13,7 @@ namespace TreechanLogic
             List<Post> roots = new List<Post>();
             foreach (RawPost post in posts)
             {
-                //if (Enumerable.SequenceEqual(post.Parents, new int[] { })) // if post without parents then add it to tree list
-                if (!post.Parents.Any() || post.Parents.Contains(OPpost))
+                if (!post.Parents.Any() || post.Parents.Contains(OPpost)) // if post is answer to OP-post then make tree for it
                 {
                     Post root = new Post(post);
                     if (post.Id != OPpost)
@@ -29,7 +28,8 @@ namespace TreechanLogic
         }
         public Post MakeTree(Post root, List<RawPost> posts)
         {
-            List<RawPost> childs = posts.FindAll(x => x.Parents.Contains(root.data.Id)); // get child posts
+            // get child posts
+            List<RawPost> childs = posts.FindAll(x => x.Parents.Contains(root.data.Id)); 
             root.AddChilds(childs); // attach childs
             foreach (Post post in root.children)
             {
@@ -51,6 +51,7 @@ namespace TreechanLogic
             {
                 DrawTree(child, depth + 1);
             }
+
         }
     }
 }

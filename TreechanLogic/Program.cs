@@ -35,16 +35,14 @@ namespace TreechanLogic
     {
         private List<int> parents;
         private int id;
-        private int[] childs;
         private string header;
         private string text;
         private int number;
         private PostJ json;
-        public RawPost(List<int> parents, int id, int[] childs, string header, string text, int number, PostJ json)
+        public RawPost(List<int> parents, int id, string header, string text, int number, PostJ json)
         {
             this.parents = parents;
             this.id = id;
-            this.childs = childs;
             this.header = header;
             this.text = text;
             this.number = number;
@@ -66,10 +64,13 @@ namespace TreechanLogic
             
             List<RawPost> posts = new List<RawPost>();
 
-            string url = "https://2ch.hk/b/res/280020200.json";
+            string url = "https://2ch.hk/b/res/281365085.json";
             int OPpost = 0;
             TestRealThread(ref posts, url, out OPpost);
-
+            if (OPpost == -1)
+            {
+                return;
+            }
             Parser parser = new Parser();
             List<Post> trees = parser.Parse(posts, OPpost);
             foreach (Post tree in trees)
@@ -80,18 +81,32 @@ namespace TreechanLogic
         }
         static RootJ GetResponse(string url)
         {
-            var myJsonResponse = new WebClient().DownloadString(url);
-
+            string myJsonResponse = "";
+            try
+            {
+                myJsonResponse = new WebClient().DownloadString(url);
+            }
+            catch (System.Net.WebException)
+            {
+                Console.WriteLine("404");
+                return null;
+            }
             Console.WriteLine("JSON size: " + System.Text.Encoding.Unicode.GetByteCount(myJsonResponse)/1024 + "KB");
             RootJ threadPage = JsonConvert.DeserializeObject<RootJ>(myJsonResponse);
 
             return threadPage;
-            //RootJ myDeserializedClass = JsonConvert.DeserializeObject<RootJ>(myJsonResponse);
         }
         static void TestRealThread(ref List<RawPost> posts, string url, out int OPpost)
         {
             RootJ threadPage = GetResponse(url);
+            if (threadPage == null)
+            {
+                OPpost = -1;
+                return;
+            }
+            
             OPpost = threadPage.current_thread;
+
             foreach (PostJ post in threadPage.threads.First().posts)
             {
                 // convert JSON post to RawPost
@@ -150,7 +165,6 @@ namespace TreechanLogic
                 RawPost rawPost = new RawPost(
                     parents:parents,
                     id:post.num,
-                    childs:new int[] { },
                     header:header,
                     text:textPreview,
                     number:post.number,
